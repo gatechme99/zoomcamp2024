@@ -21,9 +21,6 @@ def main(params):
     table_name = params.table_name
     url = params.url
 
-    #Get file name from url
-    file_name = url.rsplit('/', 1)[-1].strip()
-
     #Download file from url
     os.system(f"wget {url} -O {csv_name}")
 
