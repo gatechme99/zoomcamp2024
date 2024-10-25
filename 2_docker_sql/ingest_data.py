@@ -12,7 +12,7 @@ from sqlalchemy import create_engine
 
 def main(params):
 
-    #define params passed from parser
+    #Define params passed from parser
     user = params.user
     password = params.password
     host = params.host
@@ -21,17 +21,22 @@ def main(params):
     table_name = params.table_name
     url = params.url
 
-    #download the csv and handle file compression
+    #Get file name from url
+    file_name = url.rsplit('/', 1)[-1].strip()
+
+    #Download file from url
+    os.system(f"wget {url} -O {csv_name}")
+
+    #Create SQL engine
+    engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db}')
+
+    #Read file based on compression
     if url.endswith('.csv.gz'):
         csv_name = 'output.csv.gz'
     else:
         csv_name = 'output.csv'
-
-    os.system(f'wget {url} -O {csv_name}')
-
-    engine = create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db}')
-
-    # from code previously in jupyter notebook, ingest data into postgres
+    
+    # Ingest data into postgres [from code previously in jupyter notebook]
     df_iter = pd.read_csv(csv_name, iterator=True, chunksize=100000)
 
     df = next(df_iter)
@@ -58,7 +63,7 @@ def main(params):
 
             t_end = time()
 
-            print('inserted another chunk, took %.3f second' % (t_end - t_start))
+            print('Inserted another chunk, took %.3f second' % (t_end - t_start))
 
         except StopIteration:
             print('Finished ingesting data into postgres database')
@@ -66,7 +71,7 @@ def main(params):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Ingest CSV data to Postgres')
+    parser = argparse.ArgumentParser(description='Ingest data to Postgres')
 
     # user, password, host, port, database name, table name, url of the csv
     parser.add_argument('--user', required=True, help='user name for postgres')
@@ -78,5 +83,4 @@ if __name__ == '__main__':
     parser.add_argument('--url', required=True, help='url of the csv file')
 
     args = parser.parse_args()
-    
     main(args)
